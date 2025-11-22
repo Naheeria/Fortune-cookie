@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랜덤 아이템 획득 시뮬레이터 (헌터 컨셉 - 그린)</title>
+    <style>
+        /* 폰트: 깔끔한 Noto Sans KR 사용 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5; /* 밝고 깔끔한 배경 */
+            font-family: 'Noto Sans KR', sans-serif;
+            color: #333;
+        }
+
+        .item-simulator-card {
+            width: 360px;
+            background-color: #ffffff; /* 흰색 카드 배경 */
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(46, 139, 87, 0.2); 
+            border: 1px solid #ddd; /* 얇은 경계선 */
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .item-simulator-card:hover {
+            box-shadow: 0 15px 40px rgba(46, 139, 87, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .header-title {
+            font-size: 1.6em;
+            color: #2E8B57; /* 메인 초록색 계열 제목 */
+            margin-bottom: 5px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            letter-spacing: 1px;
+            font-weight: 700;
+            line-height: 1.2; /* 줄바꿈을 위해 line-height 추가 */
+        }
+
+        .status-text {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .result-display {
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-color: #f7f7f7; /* 결과 영역 배경 */
+            border-radius: 8px;
+            border: 1px dashed #D9EAD3; /* 매우 연한 초록색 점선 */
+            margin-bottom: 25px;
+            /* Flex-direction이 column이므로, 중앙 정렬이 더 쉽습니다. */
+        }
+        
+        /* 새로운 안내 문구 스타일 */
+        #guidanceText {
+            font-size: 0.9em;
+            color: #6c757d; /* 차분한 회색 */
+            margin-bottom: 10px; /* 아이템 이름과의 간격 */
+            font-weight: 400;
+        }
+        
+        /* 획득된 아이템 텍스트 스타일 */
+        #itemResult {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #2E8B57; /* 메인 초록색으로 강조 */
+            line-height: 1.5;
+            word-break: keep-all;
+            margin: 0;
+            transition: color 0.3s;
+        }
+
+        /* 획득 버튼 스타일 (이전과 동일) */
+        #acquireButton {
+            background-color: #2E8B57; 
+            color: #ffffff;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: 400;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #acquireButton:hover {
+            background-color: #3CB371; 
+            transform: scale(1.02);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        #acquireButton:active {
+            transform: scale(0.98);
+        }
+
+        .footer-note {
+            font-size: 0.75em;
+            color: #999;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="item-simulator-card">
+        <h1 class="header-title">📜 헌터 아카이브<br>[ITEM SCAN]</h1>
+        <p class="status-text">프로토콜: 아이템 데이터베이스 스캔을 시작합니다.</p>
+        
+        <div class="result-display">
+            <p id="guidanceText">당신이 찾아낸 아이템은...</p>
+            <p id="itemResult">데이터 스캔 중...</p>
+        </div>
+        
+        <button id="acquireButton">아이템 획득</button>
+
+        <p class="footer-note">
+            결과는 브라우저 로딩 시 또는 버튼 클릭 시 무작위로 결정됩니다.
+        </p>
+    </div>
+
+    <script>
+        // 1. 아이템 목록 정의 (이전과 동일)
+        const itemCatalog = [
+            "저주받은 검", "일몰의 검", "히드라", "비명말뚝", "트리아이나", "유스티티아",
+            "기사의 맹약", "요정의 약속", "용의 눈", "용의 심장", "용의 폐", "용의 간",
+            "스킬석", "파이로맨서 네크리스", "봉인된 마도서", "무한동력 코어", "용궁의 보주",
+            "헤르메스의 신발", "명계의 모포", "전기 장어 껍질", "신의 물방울", "페어리 프랭크",
+            "겨울 덮개", "신성나무 묘목", "간첩 산호", "아이템 박스", "백미늘장",
+            "탐욕의 나침반", "괴멸의 서", "1급 성수", "비틀린 토끼발", "잉어 내단",
+            "붕괴 입자", "아리아드네의 실", "심야의 파편", "도플갱어의 질투심", "엘릭서",
+            "흡혈귀의 거울", "텔레포테이션 스톤"
+        ];
+
+        // 2. 아이템을 랜덤으로 선택하고 표시하는 함수
+        function acquireRandomItem() {
+            const randomIndex = Math.floor(Math.random() * itemCatalog.length);
+            document.getElementById('itemResult').textContent = itemCatalog[randomIndex];
+            document.getElementById('acquireButton').textContent = "아이템 재획득";
+        }
+
+        // 3. 이벤트 리스너 설정
+        acquireRandomItem();
+        document.getElementById('acquireButton').addEventListener('click', acquireRandomItem);
+    </script>
+
+</body>
+</html>
